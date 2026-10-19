@@ -246,7 +246,6 @@
       const soto = quantities.q_soto;
       const name = document.getElementById('cust_name').value;
       const phone = document.getElementById('cust_phone').value;
-      const fulfillment = document.getElementById('fulfillment').value;
 
       if (!name || !phone) { alert("Please enter your name and phone number!"); return; }
       if (mee === 0 && soto === 0) { alert("Please select at least 1 item!"); return; }
@@ -262,11 +261,11 @@
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name, phone: phone, items: itemsStr, total: total, option: fulfillment })
+        body: JSON.stringify({ name: name, phone: phone, items: itemsStr, total: total })
       });
 
       // Redirect to WhatsApp
-      const waMsg = `Hi! I placed an order:%0A- *Name:* ${name}%0A- *Option:* ${fulfillment}%0A- *Items:* ${itemsStr}%0A- *Total:* RM ${total.toFixed(2)}`;
+      const waMsg = `Hi! I placed an order:%0A- *Name:* ${name}%0A- *Items:* ${itemsStr}%0A- *Total:* RM ${total.toFixed(2)}`;
       window.location.href = `https://wa.me/${SELLER_WHATSAPP}?text=${waMsg}`;
     }
   </script>
