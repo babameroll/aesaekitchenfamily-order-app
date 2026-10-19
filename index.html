@@ -3,69 +3,259 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Menu</title>
+  <title>Pre-Order Menu</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 450px; margin: 0 auto; padding: 15px; background: #f8f9fa; }
-    .card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    button { background: #28a745; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; font-weight: bold; cursor: pointer; }
-    input { width: 95%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    :root {
+      --primary: #d90429;
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text: #212529;
+      --accent: #ffb703;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .header h2 {
+      margin: 0;
+      color: var(--primary);
+      font-size: 24px;
+    }
+    .header p {
+      margin: 4px 0 0;
+      font-size: 14px;
+      color: #6c757d;
+    }
+    .card {
+      background: var(--card-bg);
+      padding: 16px;
+      margin-bottom: 16px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .product-item {
+      display: flex;
+      gap: 12px;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #f1f3f5;
+    }
+    .product-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+    .product-img {
+      width: 90px;
+      height: 90px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+    .product-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .product-title {
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .product-price {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 15px;
+      margin-top: 4px;
+    }
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .qty-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+      background: #f8f9fa;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .qty-val {
+      font-weight: 600;
+      width: 20px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #495057;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      box-sizing: border-box;
+      border: 1px solid #ced4da;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .btn-submit {
+      background: #25D366;
+      color: white;
+      border: none;
+      padding: 14px;
+      width: 100%;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .total-box {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 18px;
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 2px dashed #dee2e6;
+    }
   </style>
 </head>
 <body>
 
-  <h2> Order Menu</h2>
-  
+  <div class="header">
+    <h2>Dapur Special Menu</h2>
+    <p>Select your items to place an order</p>
+  </div>
+
+  <!-- PRODUCT LIST -->
   <div class="card">
-    <div class="item">
-      <div><strong>Mee Kari</strong><br>RM 10.00</div>
-      <input type="number" id="q_mee" value="0" min="0" style="width:50px;">
+    <!-- Item 1: Mee Kari -->
+    <div class="product-item">
+      <img src="https://i.ibb.co/6yqGThL/mee-kari.jpg" class="product-img" alt="Mee Kari">
+      <div class="product-info">
+        <div>
+          <div class="product-title">Mee Kari</div>
+          <div class="product-price">RM 10.00</div>
+        </div>
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="updateQty('q_mee', -1)">-</button>
+          <span class="qty-val" id="q_mee">0</span>
+          <button class="qty-btn" onclick="updateQty('q_mee', 1)">+</button>
+        </div>
+      </div>
     </div>
-    <div class="item">
-      <div><strong>Bihun Soto</strong><br>RM 8.00</div>
-      <input type="number" id="q_soto" value="0" min="0" style="width:50px;">
+
+    <!-- Item 2: Bihun Soto -->
+    <div class="product-item">
+      <img src="https://i.ibb.co/3s8p8mG/bihun-soto.jpg" class="product-img" alt="Bihun Soto">
+      <div class="product-info">
+        <div>
+          <div class="product-title">Bihun Soto</div>
+          <div class="product-price">RM 8.00</div>
+        </div>
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="updateQty('q_soto', -1)">-</button>
+          <span class="qty-val" id="q_soto">0</span>
+          <button class="qty-btn" onclick="updateQty('q_soto', 1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Price Display -->
+    <div class="total-box">
+      <span>Total:</span>
+      <span id="total_price">RM 0.00</span>
     </div>
   </div>
 
+  <!-- CUSTOMER DETAILS -->
   <div class="card">
-    <h3>Your Details</h3>
-    <label>Name</label>
-    <input type="text" id="cust_name" placeholder="Enter your name">
-    <label>Phone Number</label>
-    <input type="text" id="cust_phone" placeholder="0123456789">
-    <button onclick="submitOrder()">Place Order via WhatsApp</button>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="cust_name" placeholder="e.g. Ahmad">
+    </div>
+    <div class="form-group">
+      <label>Phone Number</label>
+      <input type="tel" id="cust_phone" placeholder="e.g. 0123456789">
+    </div>
+    <div class="form-group">
+      <label>Fulfillment Option</label>
+      <select id="fulfillment">
+        <option value="Self Pickup">Self Pickup</option>
+        <option value="Delivery">Delivery</option>
+      </select>
+    </div>
+
+    <button class="btn-submit" onclick="submitOrder()">
+      Place Order via WhatsApp
+    </button>
   </div>
 
   <script>
     // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWTCSnaqYmvG2Y13JHWqiHtnrbdifCWT7i7GRo-O6FQbXBviP532YoyyaTpTMlrOm8Nw/exec";
-    const SELLER_WHATSAPP = "601111123450"; // Replace with your WhatsApp number (with country code)
+    const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+    const SELLER_WHATSAPP = "60123456789"; // Replace with your phone number
+
+    let quantities = { q_mee: 0, q_soto: 0 };
+
+    function updateQty(id, change) {
+      quantities[id] = Math.max(0, quantities[id] + change);
+      document.getElementById(id).innerText = quantities[id];
+      calculateTotal();
+    }
+
+    function calculateTotal() {
+      const total = (quantities.q_mee * 10) + (quantities.q_soto * 8);
+      document.getElementById('total_price').innerText = `RM ${total.toFixed(2)}`;
+      return total;
+    }
 
     function submitOrder() {
-      const mee = parseInt(document.getElementById('q_mee').value) || 0;
-      const soto = parseInt(document.getElementById('q_soto').value) || 0;
+      const mee = quantities.q_mee;
+      const soto = quantities.q_soto;
       const name = document.getElementById('cust_name').value;
       const phone = document.getElementById('cust_phone').value;
+      const fulfillment = document.getElementById('fulfillment').value;
 
       if (!name || !phone) { alert("Please enter your name and phone number!"); return; }
       if (mee === 0 && soto === 0) { alert("Please select at least 1 item!"); return; }
 
-      const total = (mee * 10) + (soto * 8);
+      const total = calculateTotal();
       let itemsList = [];
       if (mee > 0) itemsList.push(`Mee Kari x${mee}`);
       if (soto > 0) itemsList.push(`Bihun Soto x${soto}`);
       const itemsStr = itemsList.join(", ");
 
-      // Send to Google Sheets
+      // Send order data to Google Sheets
       fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name, phone: phone, items: itemsStr, total: total })
+        body: JSON.stringify({ name: name, phone: phone, items: itemsStr, total: total, option: fulfillment })
       });
 
-      // Redirect to WhatsApp with pre-filled order message
-      const waMsg = `Hi! I placed an order:%0A- Name: ${name}%0A- Items: ${itemsStr}%0A- Total: RM ${total}`;
+      // Redirect to WhatsApp
+      const waMsg = `Hi! I placed an order:%0A- *Name:* ${name}%0A- *Option:* ${fulfillment}%0A- *Items:* ${itemsStr}%0A- *Total:* RM ${total.toFixed(2)}`;
       window.location.href = `https://wa.me/${SELLER_WHATSAPP}?text=${waMsg}`;
     }
   </script>
