@@ -163,68 +163,6 @@
       padding-top: 12px;
       border-top: 2px dashed #dee2e6;
     }
-
-    /* MODAL POPUP STYLES */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .modal-content {
-      background: white;
-      width: 90%;
-      max-width: 400px;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      box-sizing: border-box;
-    }
-    .modal-title {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      color: var(--primary);
-      text-align: center;
-    }
-    .summary-list {
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      margin-bottom: 16px;
-      line-height: 1.6;
-    }
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-    }
-    .btn-cancel {
-      background: #e9ecef;
-      color: #495057;
-      border: none;
-      padding: 12px;
-      flex: 1;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .btn-confirm {
-      background: #25D366;
-      color: white;
-      border: none;
-      padding: 12px;
-      flex: 1.5;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
@@ -300,23 +238,6 @@
     </button>
   </div>
 
-  <!-- ORDER CONFIRMATION MODAL -->
-  <div class="modal-overlay" id="confirm_modal">
-    <div class="modal-content">
-      <div class="modal-title">Confirm Your Order</div>
-      <p style="font-size: 13px; color: #6c757d; margin-top: 0; text-align: center;">Please review your details before proceeding to WhatsApp.</p>
-      
-      <div class="summary-list" id="order_summary">
-        <!-- Dynamic order details load here -->
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeModal()">Edit Order</button>
-        <button class="btn-confirm" onclick="confirmAndSend()">Confirm & Send</button>
-      </div>
-    </div>
-  </div>
-
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWTCSnaqYmvG2Y13JHWqiHtnrbdifCWT7i7GRo-O6FQbXBviP532YoyyaTpTMlrOm8Nw/exec";
     const SELLER_WHATSAPP = "601111123450"; 
@@ -324,14 +245,13 @@
     let itemPrices = { q_mee: 10.00, q_soto: 8.00 }; // Fallback prices
     let quantities = { q_mee: 0, q_soto: 0 };
     let isStoreOpen = true;
-    let pendingOrderData = null;
 
-    // Load dynamic data from Google Sheets on page load
+    // Load dynamic data from Google Sheets (Menu + Store_Config) on load
     window.onload = function() {
       fetch(SCRIPT_URL + "?nocache=" + Date.now())
         .then(response => response.json())
         .then(data => {
-          // 1. Dynamic Menu Prices
+          // 1. Sync Dynamic Prices from Menu tab
           if (data.menu) {
             if (data.menu.q_mee !== undefined) {
               itemPrices.q_mee = parseFloat(data.menu.q_mee);
@@ -343,18 +263,21 @@
             }
           }
 
-          // 2. Dynamic Settings from Store_Config
+          // 2. Sync Settings from Store_Config tab
           if (data.config) {
+            // Update Announcement Message
             if (data.config.announcement) {
               document.getElementById('announcement_text').innerText = data.config.announcement;
             }
 
+            // Handle OPEN / CLOSED Store Status
             if (data.config.status && data.config.status.toUpperCase() === 'CLOSED') {
               isStoreOpen = false;
               const submitBtn = document.getElementById('submit_btn');
               submitBtn.disabled = true;
               submitBtn.innerText = "Pre-Orders Currently CLOSED";
 
+              // Disable quantity adjustment buttons
               document.querySelectorAll('.qty-btn').forEach(btn => btn.disabled = true);
             }
           }
@@ -388,8 +311,8 @@
 
       const mee = quantities.q_mee;
       const soto = quantities.q_soto;
-      const name = document.getElementById('cust_name').value.trim();
-      const phone = document.getElementById('cust_phone').value.trim();
+      const name = document.getElementById('cust_name').value;
+      const phone = document.getElementById('cust_phone').value;
 
       if (!name || !phone) { alert("Please enter your name and phone number!"); return; }
       if (mee === 0 && soto === 0) { alert("Please select at least 1 item!"); return; }
@@ -400,41 +323,16 @@
       if (soto > 0) itemsList.push(`Bihun Soto x${soto}`);
       const itemsStr = itemsList.join(", ");
 
-      pendingOrderData = {
-        name: name,
-        phone: phone,
-        items: itemsStr,
-        total: total
-      };
-
-      document.getElementById('order_summary').innerHTML = `
-        <strong>Name:</strong> ${name}<br>
-        <strong>Phone:</strong> ${phone}<br>
-        <strong>Items:</strong> ${itemsStr}<br>
-        <hr style="border:0; border-top:1px dashed #ced4da; margin:8px 0;">
-        <strong>Total:</strong> <span style="color:var(--primary); font-weight:700;">RM ${total.toFixed(2)}</span>
-      `;
-
-      document.getElementById('confirm_modal').style.display = 'flex';
-    }
-
-    function closeModal() {
-      document.getElementById('confirm_modal').style.display = 'none';
-    }
-
-    function confirmAndSend() {
-      if (!pendingOrderData) return;
-
-      const { name, phone, items, total } = pendingOrderData;
-
+      // Send order data to Google Sheets
       fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name, phone: phone, items: items, total: total })
+        body: JSON.stringify({ name: name, phone: phone, items: itemsStr, total: total })
       });
 
-      const waMsg = `Hi! I placed an order:%0A- *Name:* ${name}%0A- *Items:* ${items}%0A- *Total:* RM ${total.toFixed(2)}`;
+      // Redirect to WhatsApp
+      const waMsg = `Hi! I placed an order:%0A- *Name:* ${name}%0A- *Items:* ${itemsStr}%0A- *Total:* RM ${total.toFixed(2)}`;
       window.location.href = `https://wa.me/${SELLER_WHATSAPP}?text=${waMsg}`;
     }
   </script>
