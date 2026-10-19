@@ -212,25 +212,24 @@
   </div>
 
   <script>
-    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWTCSnaqYmvG2Y13JHWqiHtnrbdifCWT7i7GRo-O6FQbXBviP532YoyyaTpTMlrOm8Nw/exec";
     const SELLER_WHATSAPP = "601111123450"; 
 
     let itemPrices = { q_mee: 10.00, q_soto: 8.00 }; // Default fallback prices
     let quantities = { q_mee: 0, q_soto: 0 };
 
-    // Load dynamic prices from Google Sheets on page load
+    // Load dynamic prices from Google Sheets on page load (Instant Anti-Cache Version)
     window.onload = function() {
-      fetch(SCRIPT_URL)
+      fetch(SCRIPT_URL + "?nocache=" + Date.now())
         .then(response => response.json())
         .then(data => {
-          if (data.q_mee) {
-            itemPrices.q_mee = data.q_mee;
-            document.querySelectorAll('.product-price')[0].innerText = `RM ${data.q_mee.toFixed(2)}`;
+          if (data.q_mee !== undefined) {
+            itemPrices.q_mee = parseFloat(data.q_mee);
+            document.querySelectorAll('.product-price')[0].innerText = `RM ${itemPrices.q_mee.toFixed(2)}`;
           }
-          if (data.q_soto) {
-            itemPrices.q_soto = data.q_soto;
-            document.querySelectorAll('.product-price')[1].innerText = `RM ${data.q_soto.toFixed(2)}`;
+          if (data.q_soto !== undefined) {
+            itemPrices.q_soto = parseFloat(data.q_soto);
+            document.querySelectorAll('.product-price')[1].innerText = `RM ${itemPrices.q_soto.toFixed(2)}`;
           }
           calculateTotal();
         })
