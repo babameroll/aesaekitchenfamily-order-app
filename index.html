@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Menu</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 450px; margin: 0 auto; padding: 15px; background: #f8f9fa; }
+    .card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    button { background: #28a745; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; font-weight: bold; cursor: pointer; }
+    input { width: 95%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; }
+  </style>
+</head>
+<body>
+
+  <h2> Order Menu</h2>
+  
+  <div class="card">
+    <div class="item">
+      <div><strong>Mee Kari</strong><br>RM 10.00</div>
+      <input type="number" id="q_mee" value="0" min="0" style="width:50px;">
+    </div>
+    <div class="item">
+      <div><strong>Bihun Soto</strong><br>RM 8.00</div>
+      <input type="number" id="q_soto" value="0" min="0" style="width:50px;">
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Your Details</h3>
+    <label>Name</label>
+    <input type="text" id="cust_name" placeholder="Enter your name">
+    <label>Phone Number</label>
+    <input type="text" id="cust_phone" placeholder="0123456789">
+    <button onclick="submitOrder()">Place Order via WhatsApp</button>
+  </div>
+
+  <script>
+    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
+    const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+    const SELLER_WHATSAPP = "60123456789"; // Replace with your WhatsApp number (with country code)
+
+    function submitOrder() {
+      const mee = parseInt(document.getElementById('q_mee').value) || 0;
+      const soto = parseInt(document.getElementById('q_soto').value) || 0;
+      const name = document.getElementById('cust_name').value;
+      const phone = document.getElementById('cust_phone').value;
+
+      if (!name || !phone) { alert("Please enter your name and phone number!"); return; }
+      if (mee === 0 && soto === 0) { alert("Please select at least 1 item!"); return; }
+
+      const total = (mee * 10) + (soto * 8);
+      let itemsList = [];
+      if (mee > 0) itemsList.push(`Mee Kari x${mee}`);
+      if (soto > 0) itemsList.push(`Bihun Soto x${soto}`);
+      const itemsStr = itemsList.join(", ");
+
+      // Send to Google Sheets
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, phone: phone, items: itemsStr, total: total })
+      });
+
+      // Redirect to WhatsApp with pre-filled order message
+      const waMsg = `Hi! I placed an order:%0A- Name: ${name}%0A- Items: ${itemsStr}%0A- Total: RM ${total}`;
+      window.location.href = `https://wa.me/${SELLER_WHATSAPP}?text=${waMsg}`;
+    }
+  </script>
+</body>
+</html>
