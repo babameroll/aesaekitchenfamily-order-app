@@ -19,7 +19,7 @@
       padding: 16px;
       color: var(--text);
       
-      /* Vertical Cartoon Background Settings */
+      /* Vertical Cartoon Background */
       background: url('bg.jpg') no-repeat center top;
       background-size: cover;
       background-attachment: scroll;
@@ -96,6 +96,17 @@
     .product-title {
       font-weight: 700;
       font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .badge-sold {
+      background: #ffe3e3;
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
     }
     .product-price {
       color: var(--primary);
@@ -174,6 +185,34 @@
       margin-top: 8px;
       padding-top: 12px;
       border-top: 2px dashed #dee2e6;
+    }
+
+    /* RECENT ORDER TOAST POPUP */
+    .order-toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: white;
+      color: #212529;
+      padding: 12px 16px;
+      border-radius: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      z-index: 999;
+      opacity: 0;
+      transition: transform 0.4s ease, opacity 0.4s ease;
+      max-width: 320px;
+      width: 90%;
+      box-sizing: border-box;
+      border: 1px solid #e9ecef;
+    }
+    .order-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
     }
 
     /* MODAL POPUP STYLES */
@@ -262,7 +301,10 @@
       <img src="mee-kari.jpg" class="product-img" alt="Mee Kari">
       <div class="product-info">
         <div>
-          <div class="product-title">Mee Kari</div>
+          <div class="product-title">
+            <span>Mee Kari</span>
+            <span class="badge-sold" id="sold_mee">🔥 0 sold</span>
+          </div>
           <div class="product-price">RM 10.00</div>
         </div>
         <div class="qty-controls">
@@ -278,7 +320,10 @@
       <img src="bihun-soto.jpg" class="product-img" alt="Bihun Soto">
       <div class="product-info">
         <div>
-          <div class="product-title">Bihun Soto</div>
+          <div class="product-title">
+            <span>Bihun Soto</span>
+            <span class="badge-sold" id="sold_soto">🔥 0 sold</span>
+          </div>
           <div class="product-price">RM 8.00</div>
         </div>
         <div class="qty-controls">
@@ -312,6 +357,15 @@
     </button>
   </div>
 
+  <!-- FLOATING ORDER TOAST POPUP -->
+  <div class="order-toast" id="order_toast">
+    <span style="font-size:20px;">🍲</span>
+    <div>
+      <strong id="toast_name">Ahmad</strong> just ordered<br>
+      <span id="toast_items" style="color:var(--primary); font-weight:700;">2x Mee Kari</span>
+    </div>
+  </div>
+
   <!-- ORDER CONFIRMATION MODAL -->
   <div class="modal-overlay" id="confirm_modal">
     <div class="modal-content">
@@ -337,6 +391,7 @@
     let quantities = { q_mee: 0, q_soto: 0 };
     let isStoreOpen = true;
     let pendingOrderData = null;
+    let recentOrdersList = [];
 
     // Load dynamic data from Google Sheets on page load
     window.onload = function() {
@@ -371,13 +426,40 @@
             }
           }
 
+          // 3. Items Sold Stats Counter
+          if (data.stats) {
+            if (data.stats.q_mee !== undefined) document.getElementById('sold_mee').innerText = `🔥 ${data.stats.q_mee} sold`;
+            if (data.stats.q_soto !== undefined) document.getElementById('sold_soto').innerText = `🔥 ${data.stats.q_soto} sold`;
+          }
+
+          // 4. Trigger Floating Toast Popups
+          if (data.recentOrders && data.recentOrders.length > 0) {
+            recentOrdersList = data.recentOrders;
+            startToastRotation();
+          }
+
           calculateTotal();
         })
-        .catch(err => {
-          console.log("Using fallback settings", err);
-          document.getElementById('announcement_text').innerText = "Order open today until 7:00 PM. Orders received tomorrow morning.";
-        });
+        .catch(err => console.log("Using fallback settings", err));
     };
+
+    function startToastRotation() {
+      let index = 0;
+      setInterval(() => {
+        if (recentOrdersList.length === 0) return;
+        
+        const order = recentOrdersList[index];
+        document.getElementById('toast_name').innerText = order.name;
+        document.getElementById('toast_items').innerText = order.items;
+
+        const toast = document.getElementById('order_toast');
+        toast.classList.add('show');
+
+        setTimeout(() => toast.classList.remove('show'), 4000); // Hide after 4 seconds
+
+        index = (index + 1) % recentOrdersList.length;
+      }, 9000); // Rotate every 9 seconds
+    }
 
     function updateQty(id, change) {
       if (!isStoreOpen) return;
