@@ -107,6 +107,10 @@
       font-size: 16px;
       cursor: pointer;
     }
+    .qty-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     .qty-val {
       font-weight: 600;
       width: 20px;
@@ -144,8 +148,193 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      transition: background 0.3s ease;
+    }
+    .btn-submit:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
     }
     .total-box {
       display: flex;
       justify-content: space-between;
       font-weight: 700;
+      font-size: 18px;
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 2px dashed #dee2e6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2>AESAE Kitchen Family</h2>
+    <p>Select your items to place an order</p>
+  </div>
+
+  <!-- DYNAMIC ANNOUNCEMENT BANNER -->
+  <div class="notice-banner" id="notice_banner">
+    <span class="notice-icon">📢</span>
+    <div>
+      <strong>Order Schedule:</strong><br>
+      <span id="announcement_text">Loading schedule...</span>
+    </div>
+  </div>
+
+  <!-- PRODUCT LIST -->
+  <div class="card">
+    <!-- Item 1: Mee Kari -->
+    <div class="product-item">
+      <img src="mee-kari.jpg" class="product-img" alt="Mee Kari">
+      <div class="product-info">
+        <div>
+          <div class="product-title">Mee Kari</div>
+          <div class="product-price">RM 10.00</div>
+        </div>
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="updateQty('q_mee', -1)">-</button>
+          <span class="qty-val" id="q_mee">0</span>
+          <button class="qty-btn" onclick="updateQty('q_mee', 1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Item 2: Bihun Soto -->
+    <div class="product-item">
+      <img src="bihun-soto.jpg" class="product-img" alt="Bihun Soto">
+      <div class="product-info">
+        <div>
+          <div class="product-title">Bihun Soto</div>
+          <div class="product-price">RM 8.00</div>
+        </div>
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="updateQty('q_soto', -1)">-</button>
+          <span class="qty-val" id="q_soto">0</span>
+          <button class="qty-btn" onclick="updateQty('q_soto', 1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Price Display -->
+    <div class="total-box">
+      <span>Total:</span>
+      <span id="total_price">RM 0.00</span>
+    </div>
+  </div>
+
+  <!-- CUSTOMER DETAILS -->
+  <div class="card">
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="cust_name" placeholder="e.g. Ahmad">
+    </div>
+    <div class="form-group">
+      <label>Phone Number</label>
+      <input type="tel" id="cust_phone" placeholder="e.g. 0123456789">
+    </div>
+    
+    <button class="btn-submit" id="submit_btn" onclick="submitOrder()">
+      Place Order via WhatsApp
+    </button>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWTCSnaqYmvG2Y13JHWqiHtnrbdifCWT7i7GRo-O6FQbXBviP532YoyyaTpTMlrOm8Nw/exec";
+    const SELLER_WHATSAPP = "601111123450"; 
+
+    let itemPrices = { q_mee: 10.00, q_soto: 8.00 }; // Fallback prices
+    let quantities = { q_mee: 0, q_soto: 0 };
+    let isStoreOpen = true;
+
+    // Load dynamic data from Google Sheets (Menu + Store_Config) on load
+    window.onload = function() {
+      fetch(SCRIPT_URL + "?nocache=" + Date.now())
+        .then(response => response.json())
+        .then(data => {
+          // 1. Sync Dynamic Prices from Menu tab
+          if (data.menu) {
+            if (data.menu.q_mee !== undefined) {
+              itemPrices.q_mee = parseFloat(data.menu.q_mee);
+              document.querySelectorAll('.product-price')[0].innerText = `RM ${itemPrices.q_mee.toFixed(2)}`;
+            }
+            if (data.menu.q_soto !== undefined) {
+              itemPrices.q_soto = parseFloat(data.menu.q_soto);
+              document.querySelectorAll('.product-price')[1].innerText = `RM ${itemPrices.q_soto.toFixed(2)}`;
+            }
+          }
+
+          // 2. Sync Settings from Store_Config tab
+          if (data.config) {
+            // Update Announcement Message
+            if (data.config.announcement) {
+              document.getElementById('announcement_text').innerText = data.config.announcement;
+            }
+
+            // Handle OPEN / CLOSED Store Status
+            if (data.config.status && data.config.status.toUpperCase() === 'CLOSED') {
+              isStoreOpen = false;
+              const submitBtn = document.getElementById('submit_btn');
+              submitBtn.disabled = true;
+              submitBtn.innerText = "Pre-Orders Currently CLOSED";
+
+              // Disable quantity adjustment buttons
+              document.querySelectorAll('.qty-btn').forEach(btn => btn.disabled = true);
+            }
+          }
+
+          calculateTotal();
+        })
+        .catch(err => {
+          console.log("Using fallback settings", err);
+          document.getElementById('announcement_text').innerText = "Order open today until 7:00 PM. Orders received tomorrow morning.";
+        });
+    };
+
+    function updateQty(id, change) {
+      if (!isStoreOpen) return;
+      quantities[id] = Math.max(0, quantities[id] + change);
+      document.getElementById(id).innerText = quantities[id];
+      calculateTotal();
+    }
+
+    function calculateTotal() {
+      const total = (quantities.q_mee * itemPrices.q_mee) + (quantities.q_soto * itemPrices.q_soto);
+      document.getElementById('total_price').innerText = `RM ${total.toFixed(2)}`;
+      return total;
+    }
+
+    function submitOrder() {
+      if (!isStoreOpen) {
+        alert("Pre-orders are currently closed!");
+        return;
+      }
+
+      const mee = quantities.q_mee;
+      const soto = quantities.q_soto;
+      const name = document.getElementById('cust_name').value;
+      const phone = document.getElementById('cust_phone').value;
+
+      if (!name || !phone) { alert("Please enter your name and phone number!"); return; }
+      if (mee === 0 && soto === 0) { alert("Please select at least 1 item!"); return; }
+
+      const total = calculateTotal();
+      let itemsList = [];
+      if (mee > 0) itemsList.push(`Mee Kari x${mee}`);
+      if (soto > 0) itemsList.push(`Bihun Soto x${soto}`);
+      const itemsStr = itemsList.join(", ");
+
+      // Send order data to Google Sheets
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, phone: phone, items: itemsStr, total: total })
+      });
+
+      // Redirect to WhatsApp
+      const waMsg = `Hi! I placed an order:%0A- *Name:* ${name}%0A- *Items:* ${itemsStr}%0A- *Total:* RM ${total.toFixed(2)}`;
+      window.location.href = `https://wa.me/${SELLER_WHATSAPP}?text=${waMsg}`;
+    }
+  </script>
+</body>
+</html>
